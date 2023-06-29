@@ -1,0 +1,6 @@
+/run/
+/build/
+/.gradle/
+/debugmods/
+/.idea/
+/gradle/
