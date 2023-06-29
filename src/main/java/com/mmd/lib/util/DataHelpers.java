@@ -3,6 +3,8 @@ package com.mmd.lib.util;
 import com.google.common.base.Joiner;
 import com.mmd.lib.MMDLib;
 
+import com.mmd.lib.common.types.Constants;
+import com.mmd.lib.common.types.LocationType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.moddiscovery.ModFile;
@@ -26,12 +28,38 @@ import java.util.stream.Collectors;
 public class DataHelpers {
     private static final Logger LOGGER = MMDLib.LOGGER;
 
-    public static List<ResourceLocation> buildFileList(IModFileInfo info) {
-        Path root = info.getFile().getSecureJar().getPath("assets", "mmdlib-data");
+    public static List<ResourceLocation> getMaterialsList(IModFileInfo info) {
+        return buildFileList(info, LocationType.MATERIAL);
+    }
+
+    public static List<ResourceLocation> getBlocksList(IModFileInfo info) {
+        return buildFileList(info, LocationType.BLOCK);
+    }
+
+    public static List<ResourceLocation> getItemsList(IModFileInfo info) {
+        return buildFileList(info, LocationType.ITEM);
+    }
+
+    private static String getResourcePathBase(LocationType type) {
+        return switch(type) {
+            case MATERIAL -> Constants.PathBits.materials;
+            case ITEM -> Constants.PathBits.items;
+            case BLOCK -> Constants.PathBits.blocks;
+            case NONE -> "";
+            default -> "";
+        };
+    }
+
+    public static List<ResourceLocation> buildFileList(IModFileInfo info, LocationType type) {
+        String p = getResourcePathBase(type);
+
+        if (p.isEmpty() || p.matches("")) return Collections.emptyList();
+
+        Path root = info.getFile().getSecureJar().getPath(p);
         try {
             return Files.walk(root).map(root::relativize)//path -> root.relativize(path))
                     .filter(path -> path.getNameCount() <= 64) // logical bounds checking
-                    .filter(path -> path.toString().toLowerCase(Locale.ROOT).endsWith(".json"))
+                    .filter(path -> path.toString().toLowerCase(Locale.ENGLISH).endsWith(".json"))
                     .map(path -> Joiner.on('/').join(path))
                     .map(path -> path.substring(0, path.length() - 5)) // strip the extension
                     .map(path -> new ResourceLocation(info.getMods().get(0).getModId(), path))
@@ -44,9 +72,10 @@ public class DataHelpers {
         }
     }
 
-    public static String loadFile(ResourceLocation fileLoc) {
+    public static String loadFile(ResourceLocation fileLoc, LocationType resourceType) {
         ModFile mf = (ModFile) ModList.get().getModFileById(fileLoc.getNamespace()).getFile();
-        String base = String.format("assets/mmdlib-data/%s.json", fileLoc.getPath());
+        String pathRoot = getResourcePathBase(resourceType);
+        String base = pathRoot.concat("/").concat(fileLoc.getPath()).concat(".json");
         Path p = mf.getSecureJar().getPath(base);
         StringBuilder buffer = new StringBuilder();
         try(InputStream is = p.toUri().toURL().openStream();

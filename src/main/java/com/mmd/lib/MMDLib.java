@@ -36,19 +36,20 @@ public class MMDLib
 
     public MMDLib()
     {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        //IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
+        //modEventBus.addListener(this::commonSetup);
 
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
+        //BLOCKS.register(modEventBus);
+        //ITEMS.register(modEventBus);
 
-        MinecraftForge.EVENT_BUS.register(this);
-        List<ResourceLocation> foundFiles = new LinkedList<>();
-        ModList.get().getModFiles().stream().map(DataHelpers::buildFileList).forEach(foundFiles::addAll);
+        //MinecraftForge.EVENT_BUS.register(this);
 
-        foundFiles.parallelStream().map(DataHelpers::loadFile).forEach(data -> LOGGER.info("loaded: {}", data));
+        // TODO:
+        //      Find Materials, Items and Blocks
+        //      Run data through JSLT
+        //      Hand to CODEC to load
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
