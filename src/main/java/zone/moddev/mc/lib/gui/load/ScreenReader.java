@@ -113,6 +113,7 @@ public final class ScreenReader {
     private final String source;
     private final List<List<Node>> open = new ArrayList<>();
     private final List<Node> stack = new ArrayList<>();
+    private int nodes;
     private Locator locator;
     private Node root;
 
@@ -131,6 +132,10 @@ public final class ScreenReader {
       if (!NAMESPACE.equals(uri))
         throw new SAXParseException(
             "Element <" + qName + "> is not in the screen namespace " + NAMESPACE, locator);
+      if (stack.size() >= 64)
+        throw new SAXParseException("Screen nesting exceeds 64 levels", locator);
+      if (++nodes > 4097)
+        throw new SAXParseException("A screen may have at most 4096 elements", locator);
       var values = new LinkedHashMap<String, String>();
       for (int i = 0; i < attributes.getLength(); i++)
         if (attributes.getURI(i).isEmpty())
@@ -163,6 +168,13 @@ public final class ScreenReader {
   // Conversion to the model
 
   private static final class Builder {
+    private int slotIndex(Node node) {
+      int index = integer(node, "index");
+      if (index < 0 || index > 4095)
+        throw error(node, "Slot index must be between 0 and 4095");
+      return index;
+    }
+
     private final String source;
 
     Builder(String source) {
@@ -213,7 +225,7 @@ public final class ScreenReader {
         case "slot" ->
             new Slot(
                 c,
-                integer(node, "index"),
+                slotIndex(node),
                 enumValue(SlotSize.class, node, "size"),
                 enumValue(SlotKind.class, node, "kind"),
                 color(node, "tint"),
@@ -343,7 +355,7 @@ public final class ScreenReader {
 
     private int offset(Node node, String name) {
       int pixels = pixels(node, name);
-      if (Math.abs(pixels) > 64)
+      if (pixels < -64 || pixels > 64)
         throw error(node, name + " must be within 64 px either way, not " + pixels);
       return pixels;
     }

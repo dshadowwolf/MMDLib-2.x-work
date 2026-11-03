@@ -104,6 +104,12 @@ public class ItemStorage extends ItemStackHandler {
     super.setSize(roles == null ? size : roles.length);
   }
 
+  /** Refuses nonpositive requests before ItemStackHandler can grow a stack by subtraction. */
+  @Override
+  public ItemStack extractItem(int slot, int amount, boolean simulate) {
+    return amount <= 0 ? ItemStack.EMPTY : super.extractItem(slot, amount, simulate);
+  }
+
   @Override
   public boolean isItemValid(int slot, ItemStack stack) {
     return bypass || (roles[slot] != Role.OUTPUT && filters[slot].test(stack));

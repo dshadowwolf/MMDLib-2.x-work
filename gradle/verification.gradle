@@ -17,6 +17,7 @@ tasks.named('check') { dependsOn tasks.named('compileRuntimeTestJava') }
 // (in zone.moddev.mc.lib.common.builders), plus any system properties the check reads.
 def resources = file('src/main/resources').absolutePath
 def builderChecks = [
+    verifySafetyChecks      : ['SafetyChecksTest'],
     verifyItemBuilder       : ['ItemBuilderTest'],
     verifyItemTemplate      : ['ItemTemplateTest'],
     verifyBlockBuilder      : ['BlockBuilderTest'],

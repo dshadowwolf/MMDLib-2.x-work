@@ -24,7 +24,6 @@ import com.google.gson.JsonParser;
 import net.minecraft.resources.ResourceLocation;
 
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.moddiscovery.ModFile;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 
 import zone.moddev.mc.lib.common.types.Constants;
@@ -51,7 +50,7 @@ public class DataLoaders {
 
   /** Whether field {@code fieldName} of {@code obj} is a primitive. */
   protected static Boolean isFieldAPrimitive(final JsonObject obj, final String fieldName) {
-    return obj.get(fieldName).isJsonPrimitive();
+    return obj.has(fieldName) && obj.get(fieldName).isJsonPrimitive();
   }
 
   /** Whether {@code obj} has {@code fieldName} and it is a primitive. */
@@ -67,7 +66,7 @@ public class DataLoaders {
 
   /** Whether {@code obj}'s {@code type} is {@code item}. */
   protected static Boolean typeIsItem(final JsonObject obj) {
-    return obj.get("type").getAsString().matches("item");
+    return typeFieldExists(obj) && "item".equals(obj.get("type").getAsString());
   }
 
   /**
@@ -77,7 +76,12 @@ public class DataLoaders {
    */
   public static String loadFile(
       ResourceLocation fileLoc, String extension, LocationType resourceType) {
-    ModFile mf = (ModFile) ModList.get().getModFileById(fileLoc.getNamespace()).getFile();
+    var info = ModList.get().getModFileById(fileLoc.getNamespace());
+    if (info == null) {
+      LOGGER.error("Cannot read {}: mod {} is not installed", fileLoc, fileLoc.getNamespace());
+      return "";
+    }
+    var mf = info.getFile();
     String pathRoot = getResourcePathBase(resourceType);
     String base = pathRoot.concat("/").concat(fileLoc.getPath()).concat(".").concat(extension);
     Path p = mf.getSecureJar().getPath(base);
@@ -125,7 +129,7 @@ public class DataLoaders {
   protected static List<ResourceLocation> buildFileList(IModFileInfo info, LocationType type) {
     String p = getResourcePathBase(type);
 
-    if (p.isEmpty() || p.matches("")) return Collections.emptyList();
+    if (p.isEmpty() || info.getMods().isEmpty()) return Collections.emptyList();
 
     Path root = info.getFile().getSecureJar().getPath(p);
     try (var paths = Files.walk(root)) {

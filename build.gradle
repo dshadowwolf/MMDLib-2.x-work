@@ -28,7 +28,7 @@ runs {
     configureEach {
         workingDirectory project.layout.projectDirectory.dir('run')
         modSource project.sourceSets.main
-    }
+    }doe
     client {}
     server { argument '--nogui' }
     data {

@@ -40,6 +40,9 @@ public class FluidStorage implements IFluidHandler, INBTSerializable<CompoundTag
 
   /** Adds a tank and returns its index. */
   public int addTank(int capacity, Role role, Predicate<FluidStack> filter) {
+    if (capacity < 0) throw new IllegalArgumentException("Tank capacity must be nonnegative");
+    java.util.Objects.requireNonNull(role, "role");
+    java.util.Objects.requireNonNull(filter, "filter");
     tanks.add(
         new FluidTank(capacity, filter) {
           @Override
@@ -183,6 +186,7 @@ public class FluidStorage implements IFluidHandler, INBTSerializable<CompoundTag
   }
 
   private FluidStack drain(int maxDrain, FluidAction action, Predicate<Role> allowed) {
+    if (maxDrain <= 0) return FluidStack.EMPTY;
     for (int i = 0; i < tanks.size(); i++)
       if (allowed.test(roles.get(i)) && !tanks.get(i).isEmpty())
         return tanks.get(i).drain(maxDrain, action);

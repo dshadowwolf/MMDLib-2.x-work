@@ -46,7 +46,7 @@ public class JParse
   /** A view of {@code data} found at {@code path}. */
   public JParse(String path, JsonElement data) {
     this.path = path;
-    this.data = data;
+    this.data = data == null ? com.google.gson.JsonNull.INSTANCE : data;
   }
 
   /** Starts walking a document whose root may be any type. */
@@ -511,7 +511,10 @@ public class JParse
 
   @Override
   public float getAsFloat() {
-    return data.getAsJsonPrimitive().getAsFloat();
+    float value = data.getAsJsonPrimitive().getAsFloat();
+    if (!Float.isFinite(value))
+      throw new JParseException("Value at '" + path + "' must be a finite float");
+    return value;
   }
 
   @Override
@@ -551,7 +554,10 @@ public class JParse
 
   @Override
   public double getAsDouble() {
-    return data.getAsJsonPrimitive().getAsDouble();
+    double value = data.getAsJsonPrimitive().getAsDouble();
+    if (!Double.isFinite(value))
+      throw new JParseException("Value at '" + path + "' must be a finite double");
+    return value;
   }
 
   @Override
@@ -575,7 +581,7 @@ public class JParse
 
   @Override
   public IntValue range(int min, int maxExclusive) {
-    var val = data.getAsJsonPrimitive().getAsInt();
+    var val = getAsInt();
     if (val < min || val >= maxExclusive) {
       throw new JParseException(
           "Value at '"
@@ -591,7 +597,11 @@ public class JParse
 
   @Override
   public int getAsInt() {
-    return data.getAsJsonPrimitive().getAsInt();
+    try {
+      return data.getAsBigDecimal().intValueExact();
+    } catch (ArithmeticException | NumberFormatException ex) {
+      throw new JParseException("Value at '" + path + "' must be an exact int", ex);
+    }
   }
 
   @Override
@@ -646,6 +656,10 @@ public class JParse
 
   @Override
   public long getAsLong() {
-    return data.getAsJsonPrimitive().getAsLong();
+    try {
+      return data.getAsBigDecimal().longValueExact();
+    } catch (ArithmeticException | NumberFormatException ex) {
+      throw new JParseException("Value at '" + path + "' must be an exact long", ex);
+    }
   }
 }

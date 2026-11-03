@@ -36,6 +36,13 @@ final class CapabilitySmoke {
     require(items.insertItem(1, new ItemStack(Items.STONE), false).getCount() == 1, "player out");
     require(items.insertResult(1, new ItemStack(Items.STONE, 3), false).isEmpty(), "result");
     require(face.extractItem(1, 2, false).getCount() == 2, "output extraction");
+    for (int amount : new int[] {-1, Integer.MIN_VALUE, 0}) {
+      require(face.extractItem(1, amount, false).isEmpty(), "negative extraction refused");
+      require(items.getStackInSlot(1).getCount() == 1, "negative extraction preserves contents");
+    }
+    var selfStack = new zone.moddev.mc.lib.util.StackContext(null);
+    require(selfStack.toStack(Items.STONE).is(Items.STONE), "first self stack");
+    require(selfStack.toStack(Items.DIRT).is(Items.DIRT), "self stack does not cache another item");
     require(face.insertItem(3, new ItemStack(Items.STONE), false).getCount() == 1, "manual");
     require(items.insertItem(3, new ItemStack(Items.STONE, 2), false).getCount() == 1, "limit");
     require(face.getStackInSlot(99).isEmpty(), "out-of-range read");
@@ -71,11 +78,31 @@ final class CapabilitySmoke {
     require(
         fluids.view(IoMode.OUTPUT).fill(new FluidStack(Fluids.WATER, 1), FluidAction.SIMULATE) == 0,
         "output face refuses fill");
+
+    require(fluids.drain(Integer.MIN_VALUE, FluidAction.EXECUTE).isEmpty(), "negative fluid drain");
+    require(fluids.getFluidInTank(in).getAmount() == 1000, "negative drain preserves tank");
+    int tankCount = fluids.getTanks();
+    try {
+      fluids.addTank(-1, Role.INPUT);
+      throw new AssertionError("Negative capacity accepted");
+    } catch (IllegalArgumentException expected) {
+      require(fluids.getTanks() == tankCount, "invalid tank not added");
+    }
     var fluidCopy = new FluidStorage();
     fluidCopy.addTank(1000, Role.INPUT);
     fluidCopy.addTank(1000, Role.OUTPUT);
     fluidCopy.deserializeNBT(provider, fluids.serializeNBT(provider));
     require(fluidCopy.getFluidInTank(in).getAmount() == 1000, "fluid NBT");
+
+
+    var boundaryItems = new ItemStorage(1);
+    boundaryItems.setStackInSlot(0, new ItemStack(Items.STONE, 5));
+    require(boundaryItems.extractItem(0, Integer.MIN_VALUE, false).isEmpty(), "owner negative extraction");
+    require(boundaryItems.getStackInSlot(0).getCount() == 5, "owner negative extraction preserves count");
+    var extremeEnergy = new EnergyBuffer(Long.MAX_VALUE, Long.MAX_VALUE);
+    require(extremeEnergy.insert(Long.MAX_VALUE, false) == Long.MAX_VALUE, "maximum long insert");
+    require(extremeEnergy.insert(1, false) == 0 && extremeEnergy.stored() == Long.MAX_VALUE, "no energy overflow");
+    require(extremeEnergy.extract(Long.MIN_VALUE, false) == 0, "negative energy refused");
 
     var energy = new EnergyBuffer(10_000_000_000L, 1000);
     require(energy.insert(5_000_000_000L, false) == 5_000_000_000L, "long insert");

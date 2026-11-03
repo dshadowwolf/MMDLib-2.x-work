@@ -227,7 +227,7 @@
       <xs:complexContent>
         <xs:extension base="leaf">
           <xs:attribute name="index" use="required">
-            <xs:simpleType><xs:restriction base="xs:int"><xs:minInclusive value="0"/></xs:restriction></xs:simpleType>
+            <xs:simpleType><xs:restriction base="xs:int"><xs:minInclusive value="0"/><xs:maxInclusive value="4095"/></xs:restriction></xs:simpleType>
           </xs:attribute>
           <xs:attribute name="size" default="normal">
             <xs:simpleType>

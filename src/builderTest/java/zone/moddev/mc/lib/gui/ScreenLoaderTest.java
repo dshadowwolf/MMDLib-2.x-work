@@ -227,6 +227,11 @@ public final class ScreenLoaderTest {
         HEAD + "<gauge length=\"7\" value=\"#getProgress\" max=\"#getProgressMax\"/></screen>");
     fails("size too large", HEAD + "<vbox padding=\"999999999999s\"/></screen>");
     fails("offset too far", HEAD + "<label text=\"a\" offset-x=\"4s\"/></screen>");
+    fails("excessive nesting", HEAD + "<vbox>".repeat(1000) + "</vbox>".repeat(1000) + "</screen>");
+    fails("excessive elements", HEAD + "<label text=\"a\"/>".repeat(4097) + "</screen>");
+    fails("minimum int offset", HEAD + "<label text=\"a\" offset-x=\"-2147483648\"/></screen>");
+    fails("overflowing slot", HEAD + "<slot index=\"2147483647\"/></screen>");
+    fails("oversized slot", HEAD + "<slot index=\"4096\"/></screen>");
     fails("bad unit", HEAD + "<vbox padding=\"3px\"/></screen>");
     var units =
         bind(HEAD

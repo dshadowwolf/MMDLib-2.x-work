@@ -51,19 +51,16 @@ public class StackContext {
    * @throws RuntimeException if the item is not registered, or no item is known
    */
   public ItemStack toStack(@Nullable Item self) {
-    if (theItem == null) {
-      if (this.item != null) {
-        theItem = BuiltInRegistries.ITEM.getOptional(this.item).orElse(null);
-        if (theItem == null)
-          throw new RuntimeException(String.format("The item '%s' is not registered.", this.item));
-      } else {
-        theItem = self;
-        if (theItem == null)
-          throw new RuntimeException(
-              "No item name specified for a stack context that isn't linked to an item.");
-      }
+    if (theItem == null && item != null) {
+      theItem = BuiltInRegistries.ITEM.getOptional(item).orElse(null);
+      if (theItem == null)
+        throw new RuntimeException(String.format("The item '%s' is not registered.", item));
     }
-    ItemStack stack = new ItemStack(theItem, count);
+    Item resolved = item == null ? self : theItem;
+    if (resolved == null)
+      throw new RuntimeException(
+          "No item name specified for a stack context that isn't linked to an item.");
+    ItemStack stack = new ItemStack(resolved, count);
     if (tag != null) stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     return stack;
   }
